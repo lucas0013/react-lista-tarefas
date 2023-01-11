@@ -6,14 +6,14 @@ export const Dashboard = () => {
     const [lista, setLista] = useState<ITarefa[]>([]);
 
     useEffect(() => {
-       TarefasService.getAll()
-       .then((result) => {
-        if(result instanceof ApiException){
-            alert(result.message)
-        }else {
-            setLista(result);
-        }
-       });
+        TarefasService.getAll()
+            .then((result) => {
+                if (result instanceof ApiException) {
+                    alert(result.message)
+                } else {
+                    setLista(result);
+                }
+            });
     }, []);
 
     const handleInputKeyDown: React.KeyboardEventHandler<HTMLInputElement> = useCallback((e) => {
@@ -24,23 +24,29 @@ export const Dashboard = () => {
 
             e.currentTarget.value = '';
 
-            setLista((oldLista) => {
-                if (oldLista.some((listItem) => listItem.title === value)) return oldLista;
-                return [...oldLista, {
-                    title: value,
-                    isCompleted: false,
-                    id: oldLista.length
-                }];
-            });
-            
+            if (lista.some((listItem) => listItem.title === value)) return;
+
+            TarefasService.create({ title: value, isCompleted: false })
+                .then((result) => {
+                    if (result instanceof ApiException) {
+                        alert(result.message)
+                    } else {
+                        setLista((oldLista) => {
+                            return [
+                                ...oldLista,
+                                 result];
+                        }
+                        );
+                    }
+                });
         }
-    }, []);
+    }, [lista]);
 
     return (
         <div>
             <p>Lista</p>
 
-            <input 
+            <input
                 onKeyDown={handleInputKeyDown}
             />
             <p>{lista.filter((listItem) => listItem.isCompleted).length}</p>
@@ -49,25 +55,25 @@ export const Dashboard = () => {
                 {lista.map((listItem) => {
                     return <li key={listItem.id}>
                         <input type="checkbox"
-                        checked={listItem.isCompleted}
-                        onChange={() => {
-                            setLista(oldLista => {
-                                return oldLista.map(oldListItem => {
-                                    const newisCompleted = oldListItem.title === listItem.title ? !oldListItem.isCompleted : oldListItem.isCompleted;
+                            checked={listItem.isCompleted}
+                            onChange={() => {
+                                setLista(oldLista => {
+                                    return oldLista.map(oldListItem => {
+                                        const newisCompleted = oldListItem.title === listItem.title ? !oldListItem.isCompleted : oldListItem.isCompleted;
 
-                                    return{
-                                        ...oldListItem,
-                                        isCompleted: newisCompleted,
-                                    };
+                                        return {
+                                            ...oldListItem,
+                                            isCompleted: newisCompleted,
+                                        };
+                                    });
                                 });
-                            });
-                        }}
+                            }}
                         />
                         {listItem.title}
                     </li>;
                 })}
             </ul>
- 
+
         </div>
     );
 }
